@@ -118,12 +118,21 @@
         
         .cat {
             position: absolute;
-            width: 100px;
-            height: 100px;
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
             pointer-events: none;
+            /* Usuń wszelkie tło */
+            background: none !important;
+            border: none !important;
+            outline: none !important;
+        }
+        
+        .cat img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            /* Upewnij się, że obrazek nie ma tła */
+            background: transparent !important;
+            /* Dodaj cień dla lepszej widoczności */
+            filter: drop-shadow(0 0 8px rgba(255, 64, 129, 0.7));
         }
         
         .back-btn {
@@ -199,11 +208,6 @@
                 align-items: center;
                 gap: 20px;
             }
-            
-            .cat {
-                width: 80px;
-                height: 80px;
-            }
         }
     </style>
 </head>
@@ -242,6 +246,17 @@
         const heartsContainer = document.getElementById('heartsContainer');
         const catsContainer = document.getElementById('catsContainer');
         const confettiCanvas = document.getElementById('confetti-canvas');
+        
+        // Lista dostępnych GIF-ów kotów
+        const catGifs = [
+            'cat-jump.gif',
+            'happy-cat.gif'
+        ];
+        
+        // Lista dostępnych video kotów
+        const catVideos = [
+            'cute-cats-dancing.mp4'
+        ];
         
         // Zmienne do śledzenia stanu
         let noButtonClicked = false;
@@ -335,24 +350,101 @@
             catsContainer.innerHTML = '';
             
             const videoRect = valentineVideo.getBoundingClientRect();
+            
+            // Więcej pozycji wokół wideo
             const positions = [
-                // Pozycje wokół wideo (góra, dół, lewo, prawo, rogi)
-                {left: videoRect.left - 120, top: videoRect.top + 50},
-                {left: videoRect.right + 20, top: videoRect.top + 50},
-                {left: videoRect.left + videoRect.width/2 - 50, top: videoRect.top - 120},
-                {left: videoRect.left + videoRect.width/2 - 50, top: videoRect.bottom + 20},
-                {left: videoRect.left - 120, top: videoRect.bottom - 120},
-                {left: videoRect.right + 20, top: videoRect.bottom - 120}
+                // Lewa strona
+                {left: videoRect.left - 150, top: videoRect.top + 50, size: 100},
+                {left: videoRect.left - 130, top: videoRect.top + videoRect.height/2 - 50, size: 120},
+                {left: videoRect.left - 150, top: videoRect.bottom - 150, size: 100},
+                
+                // Prawa strona
+                {left: videoRect.right + 30, top: videoRect.top + 50, size: 100},
+                {left: videoRect.right + 50, top: videoRect.top + videoRect.height/2 - 50, size: 120},
+                {left: videoRect.right + 30, top: videoRect.bottom - 150, size: 100},
+                
+                // Góra
+                {left: videoRect.left + videoRect.width/2 - 100, top: videoRect.top - 140, size: 100},
+                {left: videoRect.left + videoRect.width/4 - 50, top: videoRect.top - 120, size: 80},
+                {left: videoRect.left + 3*videoRect.width/4 - 50, top: videoRect.top - 120, size: 80},
+                
+                // Dół
+                {left: videoRect.left + videoRect.width/2 - 100, top: videoRect.bottom + 20, size: 100},
+                {left: videoRect.left + videoRect.width/4 - 50, top: videoRect.bottom + 40, size: 80},
+                {left: videoRect.left + 3*videoRect.width/4 - 50, top: videoRect.bottom + 40, size: 80}
             ];
             
             for (let i = 0; i < positions.length; i++) {
-                const cat = document.createElement('div');
-                cat.classList.add('cat');
-                cat.style.backgroundImage = `url('cat-jump.gif')`;
-                cat.style.left = positions[i].left + 'px';
-                cat.style.top = positions[i].top + 'px';
+                const pos = positions[i];
                 
-                catsContainer.appendChild(cat);
+                // Losowo wybieramy czy to będzie GIF czy video
+                const useVideo = Math.random() > 0.7 && catVideos.length > 0; // 30% szans na video
+                
+                let catElement;
+                
+                if (useVideo && i < catVideos.length) {
+                    // Tworzymy element video dla tańczących kotów
+                    catElement = document.createElement('video');
+                    catElement.autoplay = true;
+                    catElement.loop = true;
+                    catElement.muted = true;
+                    catElement.playsInline = true;
+                    
+                    const source = document.createElement('source');
+                    source.src = catVideos[0];
+                    source.type = 'video/mp4';
+                    catElement.appendChild(source);
+                    
+                    catElement.style.width = pos.size + 'px';
+                    catElement.style.height = pos.size + 'px';
+                    catElement.style.objectFit = 'cover';
+                    catElement.style.borderRadius = '50%';
+                    
+                } else {
+                    // Tworzymy element img dla GIF-ów
+                    catElement = document.createElement('img');
+                    
+                    // Losowo wybieramy GIF-a z listy
+                    const randomGifIndex = Math.floor(Math.random() * catGifs.length);
+                    catElement.src = catGifs[randomGifIndex];
+                    
+                    catElement.style.width = pos.size + 'px';
+                    catElement.style.height = pos.size + 'px';
+                }
+                
+                // Stylizacja
+                catElement.style.position = 'absolute';
+                catElement.style.left = pos.left + 'px';
+                catElement.style.top = pos.top + 'px';
+                catElement.style.filter = 'drop-shadow(0 0 10px rgba(255, 64, 129, 0.8))';
+                catElement.style.zIndex = '21';
+                catElement.style.pointerEvents = 'none';
+                
+                // Dodajemy klasę cat dla łatwiejszego stylowania
+                catElement.classList.add('cat-element');
+                
+                // Dodajemy losową rotację
+                const rotation = Math.random() * 20 - 10;
+                catElement.style.transform = `rotate(${rotation}deg)`;
+                
+                // Dodajemy animację pływania
+                catElement.style.animation = `floatCat ${3 + Math.random() * 4}s ease-in-out infinite alternate`;
+                
+                catsContainer.appendChild(catElement);
+            }
+            
+            // Dodajemy animację pływania kotów
+            if (!document.getElementById('cat-float-animation')) {
+                const style = document.createElement('style');
+                style.id = 'cat-float-animation';
+                style.textContent = `
+                    @keyframes floatCat {
+                        0% { transform: translateY(0px) rotate(0deg); }
+                        50% { transform: translateY(-15px) rotate(2deg); }
+                        100% { transform: translateY(0px) rotate(0deg); }
+                    }
+                `;
+                document.head.appendChild(style);
             }
         }
         
@@ -465,9 +557,16 @@
             videoContainer.classList.remove('active');
             backBtn.classList.remove('active');
             
-            // Zatrzymaj wideo
+            // Zatrzymaj główne wideo
             valentineVideo.pause();
             valentineVideo.currentTime = 0;
+            
+            // Zatrzymaj wszystkie video kotów
+            const catVideos = catsContainer.querySelectorAll('video');
+            catVideos.forEach(video => {
+                video.pause();
+                video.currentTime = 0;
+            });
             
             // Usuń kotki
             catsContainer.innerHTML = '';
