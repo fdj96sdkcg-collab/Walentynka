@@ -1,182 +1,349 @@
-{\rtf1\ansi\ansicpg1252\cocoartf2867
-\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
-{\colortbl;\red255\green255\blue255;}
-{\*\expandedcolortbl;;}
-\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
-\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Czy zostaniesz moją walentynką?</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+        }
+        
+        body {
+            background-color: #ffcce6; /* Różowe tło */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .container {
+            text-align: center;
+            padding: 20px;
+            z-index: 10;
+            position: relative;
+        }
+        
+        h1 {
+            color: #cc0066;
+            font-size: 3.5rem;
+            margin-bottom: 40px;
+            text-shadow: 3px 3px 0px rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 20px 50px;
+            font-size: 2rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-yes {
+            background-color: #ff4081;
+            color: white;
+        }
+        
+        .btn-yes:hover {
+            background-color: #f50057;
+            transform: scale(1.1);
+        }
+        
+        .btn-no {
+            background-color: #666;
+            color: white;
+            position: relative;
+        }
+        
+        .video-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 20;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        .video-container.active {
+            display: flex;
+        }
+        
+        video {
+            max-width: 90%;
+            max-height: 80%;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(255, 64, 129, 0.7);
+        }
+        
+        .back-btn {
+            margin-top: 30px;
+            padding: 15px 30px;
+            background-color: #ff4081;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: none;
+        }
+        
+        .back-btn.active {
+            display: block;
+        }
+        
+        .hearts {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .heart {
+            position: absolute;
+            color: #ff4081;
+            font-size: 24px;
+            opacity: 0.7;
+            animation: float 6s ease-in infinite;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .btn {
+                padding: 15px 30px;
+                font-size: 1.5rem;
+            }
+            
+            .buttons {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Czy zostaniesz moją walentynką?</h1>
+        
+        <div class="buttons">
+            <button class="btn btn-yes" id="yesBtn">TAK</button>
+            <button class="btn btn-no" id="noBtn">NIE</button>
+        </div>
+    </div>
+    
+    <div class="video-container" id="videoContainer">
+        <video id="valentineVideo" controls>
+            <source src="Justin Bieber - One Less Lonely Girl.mp4" type="video/mp4">
+            <source src="Justin Bieber - One Less Lonely Girl.webm" type="video/webm">
+            <source src="Justin Bieber - One Less Lonely Girl.ogg" type="video/ogg">
+            Niestety, Twoja przeglądarka nie obsługuje odtwarzania wideo.
+            Pobierz <a href="Justin Bieber - One Less Lonely Girl.mp4">tutaj</a>.
+        </video>
+        <button class="back-btn" id="backBtn">Powrót do wyboru</button>
+    </div>
+    
+    <div class="hearts" id="heartsContainer"></div>
 
-\f0\fs24 \cf0 <!DOCTYPE html>\
-<html lang="pl">\
-<head>\
-  <meta charset="UTF-8" />\
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />\
-  <title>Walentynka</title>\
-  <style>\
-    * \{ box-sizing: border-box; \}\
-    body \{\
-      margin: 0;\
-      font-family: Arial, sans-serif;\
-      background: #000;\
-      color: #fff;\
-      overflow: hidden;\
-    \}\
-\
-    .screen \{\
-      position: fixed;\
-      inset: 0;\
-      display: flex;\
-      flex-direction: column;\
-      justify-content: center;\
-      align-items: center;\
-      transition: opacity 0.6s ease, transform 0.6s ease;\
-    \}\
-\
-    .hidden \{\
-      opacity: 0;\
-      pointer-events: none;\
-      transform: scale(1.05);\
-    \}\
-\
-    h1 \{\
-      font-size: clamp(26px, 6vw, 48px);\
-      margin-bottom: 30px;\
-      text-align: center;\
-      padding: 0 20px;\
-    \}\
-\
-    .buttons \{\
-      position: relative;\
-      width: 100%;\
-      height: 120px;\
-    \}\
-\
-    button \{\
-      padding: 15px 35px;\
-      font-size: 20px;\
-      border: none;\
-      border-radius: 30px;\
-      cursor: pointer;\
-      position: absolute;\
-    \}\
-\
-    .yes \{ background: #e91e63; color: #fff; left: 50%; transform: translateX(-50%); \}\
-    .no \{ background: #444; color: #fff; \}\
-\
-    video \{\
-      position: absolute;\
-      inset: 0;\
-      width: 100%;\
-      height: 100%;\
-      object-fit: cover;\
-    \}\
-\
-    .back \{\
-      position: absolute;\
-      bottom: 30px;\
-      z-index: 3;\
-    \}\
-\
-    canvas \{\
-      position: fixed;\
-      inset: 0;\
-      pointer-events: none;\
-      z-index: 2;\
-    \}\
-  </style>\
-</head>\
-<body>\
-\
-<canvas id="confetti"></canvas>\
-<audio id="music" src="muzyka.mp3" loop></audio>\
-\
-<div id="question" class="screen">\
-  <h1>Czy zostaniesz moj\uc0\u261  walentynk\u261 ? \u10084 \u65039 </h1>\
-  <div class="buttons">\
-    <button class="yes" onclick="showMedia()">TAK</button>\
-    <button class="no" id="noBtn" onclick="goBack()">NIE</button>\
-  </div>\
-</div>\
-\
-<div id="media" class="screen hidden">\
-  <video autoplay loop muted playsinline>\
-    <source src="Justin Bieber - One Less Lonely Girl.mp4" type="video/mp4" />\
-  </video>\
-  <div class="back">\
-    <button onclick="goBack()">Wr\'f3\uc0\u263 </button>\
-  </div>\
-</div>\
-\
-<script>\
-  const noBtn = document.getElementById('noBtn');\
-\
-  noBtn.addEventListener('mouseenter', moveNo);\
-  noBtn.addEventListener('touchstart', moveNo);\
-\
-  function moveNo() \{\
-    const x = Math.random() * (window.innerWidth - 120);\
-    const y = Math.random() * (window.innerHeight - 120);\
-    noBtn.style.left = x + 'px';\
-    noBtn.style.top = y + 'px';\
-  \}\
-\
-  function showMedia() \{\
-    document.getElementById('question').classList.add('hidden');\
-    document.getElementById('media').classList.remove('hidden');\
-    startConfetti();\
-    document.getElementById('music').play();\
-  \}\
-\
-  function goBack() \{\
-    document.getElementById('media').classList.add('hidden');\
-    document.getElementById('question').classList.remove('hidden');\
-    stopConfetti();\
-    document.getElementById('music').pause();\
-  \}\
-\
-  // CONFETTI\
-  const canvas = document.getElementById('confetti');\
-  const ctx = canvas.getContext('2d');\
-  let particles = [];\
-  let anim;\
-\
-  function resize() \{\
-    canvas.width = innerWidth;\
-    canvas.height = innerHeight;\
-  \}\
-  window.addEventListener('resize', resize);\
-  resize();\
-\
-  function startConfetti() \{\
-    particles = Array.from(\{length: 150\}, () => (\{\
-      x: Math.random() * canvas.width,\
-      y: Math.random() * canvas.height,\
-      r: Math.random() * 6 + 2,\
-      dx: Math.random() - 0.5,\
-      dy: Math.random() * 3 + 2\
-    \}));\
-    loop();\
-  \}\
-\
-  function loop() \{\
-    ctx.clearRect(0,0,canvas.width,canvas.height);\
-    particles.forEach(p => \{\
-      ctx.beginPath();\
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);\
-      ctx.fillStyle = 'pink';\
-      ctx.fill();\
-      p.x += p.dx;\
-      p.y += p.dy;\
-      if (p.y > canvas.height) p.y = 0;\
-    \});\
-    anim = requestAnimationFrame(loop);\
-  \}\
-\
-  function stopConfetti() \{\
-    cancelAnimationFrame(anim);\
-    ctx.clearRect(0,0,canvas.width,canvas.height);\
-  \}\
-</script>\
-\
-</body>\
-</html>\
-}
+    <script>
+        // Elementy DOM
+        const yesBtn = document.getElementById('yesBtn');
+        const noBtn = document.getElementById('noBtn');
+        const videoContainer = document.getElementById('videoContainer');
+        const valentineVideo = document.getElementById('valentineVideo');
+        const backBtn = document.getElementById('backBtn');
+        const heartsContainer = document.getElementById('heartsContainer');
+        
+        // Zmienne do śledzenia stanu
+        let noButtonClicked = false;
+        let escapeCount = 0;
+        
+        // Tworzenie serduszek w tle
+        function createHearts() {
+            for (let i = 0; i < 30; i++) {
+                const heart = document.createElement('div');
+                heart.classList.add('heart');
+                heart.innerHTML = '❤';
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.animationDuration = (Math.random() * 4 + 3) + 's';
+                heart.style.animationDelay = Math.random() * 5 + 's';
+                heartsContainer.appendChild(heart);
+            }
+        }
+        
+        // Obsługa przycisku TAK
+        yesBtn.addEventListener('click', function() {
+            videoContainer.classList.add('active');
+            
+            // Próbujemy odtworzyć lokalny plik wideo
+            valentineVideo.play().then(() => {
+                console.log("Wideo zaczęło się odtwarzać");
+            }).catch(error => {
+                console.log("Błąd odtwarzania wideo:", error);
+                // Jeśli nie uda się odtworzyć wideo, pokażemy komunikat
+                if (valentineVideo.error) {
+                    alert("Nie udało się załadować wideo. Upewnij się, że plik 'Justin Bieber - One Less Lonely Girl.mp4' znajduje się w tym samym folderze co strona.");
+                    videoContainer.classList.remove('active');
+                }
+            });
+            
+            backBtn.classList.add('active');
+            
+            // Zatrzymaj ruchome serduszka
+            heartsContainer.innerHTML = '';
+        });
+        
+        // Obsługa przycisku NIE (ucieka przed kursorem)
+        noBtn.addEventListener('mouseover', function() {
+            if (!noButtonClicked) {
+                moveButton();
+            }
+        });
+        
+        noBtn.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            if (!noButtonClicked) {
+                moveButton();
+            }
+        });
+        
+        noBtn.addEventListener('click', function() {
+            if (!noButtonClicked) {
+                noButtonClicked = true;
+                escapeCount++;
+                
+                // Zmiana tekstu i koloru przycisku NIE po kliknięciu
+                noBtn.textContent = "OK, wracam";
+                noBtn.style.backgroundColor = "#ff4081";
+                noBtn.style.color = "white";
+                
+                // Po kliknięciu NIE - powrót do normalnego stanu
+                setTimeout(() => {
+                    resetNoButton();
+                }, 1000);
+            }
+        });
+        
+        function moveButton() {
+            // Losowe pozycje dla przycisku NIE
+            const maxX = window.innerWidth - noBtn.offsetWidth - 20;
+            const maxY = window.innerHeight - noBtn.offsetHeight - 20;
+            
+            // Upewnij się, że przycisk nie wyjdzie poza ekran
+            const x = Math.max(20, Math.min(maxX, Math.random() * maxX));
+            const y = Math.max(20, Math.min(maxY, Math.random() * maxY));
+            
+            noBtn.style.position = 'fixed';
+            noBtn.style.left = x + 'px';
+            noBtn.style.top = y + 'px';
+            
+            // Efekt wstrząsu
+            noBtn.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                noBtn.style.transform = 'scale(1)';
+            }, 150);
+            
+            // Zmiana tekstu po kilku próbach ucieczki
+            escapeCount++;
+            if (escapeCount === 3) {
+                noBtn.textContent = "Nie złapiesz mnie!";
+            } else if (escapeCount === 6) {
+                noBtn.textContent = "Jesteś uparty/a!";
+            } else if (escapeCount === 10) {
+                noBtn.textContent = "OK, kliknij mnie!";
+            }
+        }
+        
+        function resetNoButton() {
+            noButtonClicked = false;
+            noBtn.textContent = "NIE";
+            noBtn.style.backgroundColor = "#666";
+            noBtn.style.position = 'relative';
+            noBtn.style.left = 'auto';
+            noBtn.style.top = 'auto';
+        }
+        
+        // Obsługa przycisku powrotu
+        backBtn.addEventListener('click', function() {
+            videoContainer.classList.remove('active');
+            backBtn.classList.remove('active');
+            
+            // Zatrzymaj wideo
+            valentineVideo.pause();
+            valentineVideo.currentTime = 0;
+            
+            // Przywróć serduszka w tle
+            heartsContainer.innerHTML = '';
+            createHearts();
+            
+            // Zresetuj przycisk NIE
+            resetNoButton();
+            escapeCount = 0;
+        });
+        
+        // Obsługa błędu wideo
+        valentineVideo.addEventListener('error', function() {
+            console.log("Błąd wideo:", valentineVideo.error);
+            alert("Nie udało się załadować wideo. Upewnij się, że plik 'Justin Bieber - One Less Lonely Girl.mp4' znajduje się w tym samym folderze co strona.");
+            videoContainer.classList.remove('active');
+            backBtn.classList.remove('active');
+        });
+        
+        // Inicjalizacja - tworzenie serduszek
+        createHearts();
+        
+        // Dodaj obsługę dla urządzeń mobilnych
+        document.addEventListener('touchmove', function(e) {
+            // Zapobiegaj przewijaniu strony na urządzeniach mobilnych
+            if (noButtonClicked) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    </script>
+</body>
+</html>
