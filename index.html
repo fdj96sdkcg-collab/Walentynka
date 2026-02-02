@@ -116,23 +116,17 @@
             z-index: 21;
         }
         
-        .cat {
+        .moving-cat {
             position: absolute;
             pointer-events: none;
-            /* Usuń wszelkie tło */
-            background: none !important;
-            border: none !important;
-            outline: none !important;
+            z-index: 21;
         }
         
-        .cat img {
+        .moving-cat img {
             width: 100%;
             height: 100%;
             object-fit: contain;
-            /* Upewnij się, że obrazek nie ma tła */
-            background: transparent !important;
-            /* Dodaj cień dla lepszej widoczności */
-            filter: drop-shadow(0 0 8px rgba(255, 64, 129, 0.7));
+            filter: drop-shadow(0 0 10px rgba(255, 64, 129, 0.8));
         }
         
         .back-btn {
@@ -208,6 +202,11 @@
                 align-items: center;
                 gap: 20px;
             }
+            
+            .moving-cat {
+                width: 80px !important;
+                height: 80px !important;
+            }
         }
     </style>
 </head>
@@ -247,21 +246,20 @@
         const catsContainer = document.getElementById('catsContainer');
         const confettiCanvas = document.getElementById('confetti-canvas');
         
-        // Lista dostępnych GIF-ów kotów
+        // Lista dostępnych GIF-ów kotów (zaktualizowana)
         const catGifs = [
-            'cat-jump.gif',
-            'happy-cat.gif'
-        ];
-        
-        // Lista dostępnych video kotów
-        const catVideos = [
-            'cute-cats-dancing.mp4'
+            'cat-hyppy.gif',      // Zmienione z cat-jump.gif
+            'happy-cat.gif',
+            'dancing-cat-dance.gif' // Nowy GIF
         ];
         
         // Zmienne do śledzenia stanu
         let noButtonClicked = false;
         let escapeCount = 0;
         let confettiActive = false;
+        let movingCats = [];
+        let animationId = null;
+        let videoArea = null;
         
         // Tworzenie serduszek w tle
         function createHearts() {
@@ -345,107 +343,188 @@
             drawConfetti();
         }
         
-        // Funkcja do tworzenia kotków wokół wideo
-        function createCatsAroundVideo() {
+        // Funkcja do tworzenia ruchomych kotów
+        function createMovingCats() {
             catsContainer.innerHTML = '';
+            movingCats = [];
             
-            const videoRect = valentineVideo.getBoundingClientRect();
+            // Określamy obszar wideo, aby koty go omijały
+            updateVideoArea();
             
-            // Więcej pozycji wokół wideo
-            const positions = [
-                // Lewa strona
-                {left: videoRect.left - 150, top: videoRect.top + 50, size: 100},
-                {left: videoRect.left - 130, top: videoRect.top + videoRect.height/2 - 50, size: 120},
-                {left: videoRect.left - 150, top: videoRect.bottom - 150, size: 100},
-                
-                // Prawa strona
-                {left: videoRect.right + 30, top: videoRect.top + 50, size: 100},
-                {left: videoRect.right + 50, top: videoRect.top + videoRect.height/2 - 50, size: 120},
-                {left: videoRect.right + 30, top: videoRect.bottom - 150, size: 100},
-                
-                // Góra
-                {left: videoRect.left + videoRect.width/2 - 100, top: videoRect.top - 140, size: 100},
-                {left: videoRect.left + videoRect.width/4 - 50, top: videoRect.top - 120, size: 80},
-                {left: videoRect.left + 3*videoRect.width/4 - 50, top: videoRect.top - 120, size: 80},
-                
-                // Dół
-                {left: videoRect.left + videoRect.width/2 - 100, top: videoRect.bottom + 20, size: 100},
-                {left: videoRect.left + videoRect.width/4 - 50, top: videoRect.bottom + 40, size: 80},
-                {left: videoRect.left + 3*videoRect.width/4 - 50, top: videoRect.bottom + 40, size: 80}
-            ];
+            // Tworzymy 8-12 ruchomych kotów
+            const catCount = 8 + Math.floor(Math.random() * 5);
             
-            for (let i = 0; i < positions.length; i++) {
-                const pos = positions[i];
+            for (let i = 0; i < catCount; i++) {
+                createSingleMovingCat();
+            }
+            
+            // Rozpoczynamy animację ruchu
+            startCatMovement();
+        }
+        
+        // Funkcja tworząca pojedynczego ruchomego kota
+        function createSingleMovingCat() {
+            const cat = document.createElement('div');
+            cat.classList.add('moving-cat');
+            
+            // Losowy rozmiar kota
+            const size = 60 + Math.random() * 80; // 60-140px
+            cat.style.width = size + 'px';
+            cat.style.height = size + 'px';
+            
+            // Losowy GIF kota
+            const randomGifIndex = Math.floor(Math.random() * catGifs.length);
+            const img = document.createElement('img');
+            img.src = catGifs[randomGifIndex];
+            cat.appendChild(img);
+            
+            // Losowa początkowa pozycja (poza obszarem wideo)
+            let startX, startY;
+            let attempts = 0;
+            const maxAttempts = 50;
+            
+            do {
+                startX = Math.random() * (window.innerWidth - size);
+                startY = Math.random() * (window.innerHeight - size);
+                attempts++;
+            } while (isPositionInVideoArea(startX, startY, size) && attempts < maxAttempts);
+            
+            cat.style.left = startX + 'px';
+            cat.style.top = startY + 'px';
+            
+            // Losowy kierunek i prędkość
+            const speed = 0.5 + Math.random() * 1.5; // 0.5-2.0 pikseli na klatkę
+            const angle = Math.random() * Math.PI * 2; // Losowy kierunek w radianach
+            const rotationSpeed = (Math.random() - 0.5) * 0.02; // Szybkość obrotu
+            
+            // Dodaj kota do kontenera i tablicy śledzącej
+            catsContainer.appendChild(cat);
+            
+            movingCats.push({
+                element: cat,
+                x: startX,
+                y: startY,
+                size: size,
+                speed: speed,
+                angle: angle,
+                rotation: 0,
+                rotationSpeed: rotationSpeed,
+                dx: Math.cos(angle) * speed,
+                dy: Math.sin(angle) * speed
+            });
+        }
+        
+        // Sprawdza czy pozycja znajduje się w obszarze wideo
+        function isPositionInVideoArea(x, y, size) {
+            if (!videoArea) return false;
+            
+            // Dodajemy margines bezpieczeństwa wokół wideo
+            const margin = 50;
+            const safeVideoArea = {
+                left: videoArea.left - margin,
+                top: videoArea.top - margin,
+                right: videoArea.right + margin,
+                bottom: videoArea.bottom + margin
+            };
+            
+            // Sprawdzamy czy kot koliduje z obszarem wideo
+            return !(x + size < safeVideoArea.left ||
+                    x > safeVideoArea.right ||
+                    y + size < safeVideoArea.top ||
+                    y > safeVideoArea.bottom);
+        }
+        
+        // Aktualizuje obszar wideo
+        function updateVideoArea() {
+            if (valentineVideo.offsetParent) {
+                const rect = valentineVideo.getBoundingClientRect();
+                videoArea = {
+                    left: rect.left,
+                    top: rect.top,
+                    right: rect.right,
+                    bottom: rect.bottom,
+                    width: rect.width,
+                    height: rect.height
+                };
+            }
+        }
+        
+        // Rozpoczyna animację ruchu kotów
+        function startCatMovement() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            
+            function animate() {
+                updateVideoArea();
                 
-                // Losowo wybieramy czy to będzie GIF czy video
-                const useVideo = Math.random() > 0.7 && catVideos.length > 0; // 30% szans na video
-                
-                let catElement;
-                
-                if (useVideo && i < catVideos.length) {
-                    // Tworzymy element video dla tańczących kotów
-                    catElement = document.createElement('video');
-                    catElement.autoplay = true;
-                    catElement.loop = true;
-                    catElement.muted = true;
-                    catElement.playsInline = true;
+                for (const cat of movingCats) {
+                    // Aktualizuj pozycję
+                    cat.x += cat.dx;
+                    cat.y += cat.dy;
                     
-                    const source = document.createElement('source');
-                    source.src = catVideos[0];
-                    source.type = 'video/mp4';
-                    catElement.appendChild(source);
+                    // Aktualizuj rotację
+                    cat.rotation += cat.rotationSpeed;
                     
-                    catElement.style.width = pos.size + 'px';
-                    catElement.style.height = pos.size + 'px';
-                    catElement.style.objectFit = 'cover';
-                    catElement.style.borderRadius = '50%';
+                    // Odbijanie od krawędzi ekranu
+                    if (cat.x <= 0 || cat.x + cat.size >= window.innerWidth) {
+                        cat.dx = -cat.dx;
+                        cat.angle = Math.atan2(cat.dy, cat.dx);
+                    }
                     
-                } else {
-                    // Tworzymy element img dla GIF-ów
-                    catElement = document.createElement('img');
+                    if (cat.y <= 0 || cat.y + cat.size >= window.innerHeight) {
+                        cat.dy = -cat.dy;
+                        cat.angle = Math.atan2(cat.dy, cat.dx);
+                    }
                     
-                    // Losowo wybieramy GIF-a z listy
-                    const randomGifIndex = Math.floor(Math.random() * catGifs.length);
-                    catElement.src = catGifs[randomGifIndex];
+                    // Sprawdź kolizję z obszarem wideo i unikaj go
+                    if (videoArea && isPositionInVideoArea(cat.x, cat.y, cat.size)) {
+                        // Oblicz wektor od kotka do środka wideo
+                        const videoCenterX = videoArea.left + videoArea.width / 2;
+                        const videoCenterY = videoArea.top + videoArea.height / 2;
+                        const catCenterX = cat.x + cat.size / 2;
+                        const catCenterY = cat.y + cat.size / 2;
+                        
+                        // Kierunek od wideo
+                        const angleFromVideo = Math.atan2(catCenterY - videoCenterY, catCenterX - videoCenterX);
+                        
+                        // Zmień kierunek na przeciwny (od wideo)
+                        cat.angle = angleFromVideo;
+                        cat.dx = Math.cos(cat.angle) * cat.speed;
+                        cat.dy = Math.sin(cat.angle) * cat.speed;
+                        
+                        // Dodaj losową zmienność
+                        cat.angle += (Math.random() - 0.5) * 0.5;
+                        cat.dx = Math.cos(cat.angle) * cat.speed;
+                        cat.dy = Math.sin(cat.angle) * cat.speed;
+                    }
                     
-                    catElement.style.width = pos.size + 'px';
-                    catElement.style.height = pos.size + 'px';
+                    // Losowo zmień kierunek (dla bardziej naturalnego ruchu)
+                    if (Math.random() < 0.01) { // 1% szans na zmianę kierunku w każdej klatce
+                        cat.angle += (Math.random() - 0.5) * 0.5;
+                        cat.dx = Math.cos(cat.angle) * cat.speed;
+                        cat.dy = Math.sin(cat.angle) * cat.speed;
+                    }
+                    
+                    // Zastosuj transformację
+                    cat.element.style.left = cat.x + 'px';
+                    cat.element.style.top = cat.y + 'px';
+                    cat.element.style.transform = `rotate(${cat.rotation}rad)`;
                 }
                 
-                // Stylizacja
-                catElement.style.position = 'absolute';
-                catElement.style.left = pos.left + 'px';
-                catElement.style.top = pos.top + 'px';
-                catElement.style.filter = 'drop-shadow(0 0 10px rgba(255, 64, 129, 0.8))';
-                catElement.style.zIndex = '21';
-                catElement.style.pointerEvents = 'none';
-                
-                // Dodajemy klasę cat dla łatwiejszego stylowania
-                catElement.classList.add('cat-element');
-                
-                // Dodajemy losową rotację
-                const rotation = Math.random() * 20 - 10;
-                catElement.style.transform = `rotate(${rotation}deg)`;
-                
-                // Dodajemy animację pływania
-                catElement.style.animation = `floatCat ${3 + Math.random() * 4}s ease-in-out infinite alternate`;
-                
-                catsContainer.appendChild(catElement);
+                animationId = requestAnimationFrame(animate);
             }
             
-            // Dodajemy animację pływania kotów
-            if (!document.getElementById('cat-float-animation')) {
-                const style = document.createElement('style');
-                style.id = 'cat-float-animation';
-                style.textContent = `
-                    @keyframes floatCat {
-                        0% { transform: translateY(0px) rotate(0deg); }
-                        50% { transform: translateY(-15px) rotate(2deg); }
-                        100% { transform: translateY(0px) rotate(0deg); }
-                    }
-                `;
-                document.head.appendChild(style);
+            animate();
+        }
+        
+        // Zatrzymuje ruch kotów
+        function stopCatMovement() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
             }
+            movingCats = [];
         }
         
         // Obsługa przycisku TAK
@@ -461,9 +540,9 @@
                 valentineVideo.play().then(() => {
                     console.log("Wideo zaczęło się odtwarzać");
                     
-                    // Po załadowaniu wideo, dodaj kotki wokół niego
+                    // Po załadowaniu wideo, dodaj ruchome kotki
                     setTimeout(() => {
-                        createCatsAroundVideo();
+                        createMovingCats();
                     }, 100);
                     
                 }).catch(error => {
@@ -561,12 +640,8 @@
             valentineVideo.pause();
             valentineVideo.currentTime = 0;
             
-            // Zatrzymaj wszystkie video kotów
-            const catVideos = catsContainer.querySelectorAll('video');
-            catVideos.forEach(video => {
-                video.pause();
-                video.currentTime = 0;
-            });
+            // Zatrzymaj ruch kotów
+            stopCatMovement();
             
             // Usuń kotki
             catsContainer.innerHTML = '';
@@ -588,10 +663,20 @@
             backBtn.classList.remove('active');
         });
         
-        // Obsługa zmiany rozmiaru okna - ponownie pozycjonuj kotki
+        // Obsługa zmiany rozmiaru okna
         window.addEventListener('resize', function() {
             if (videoContainer.classList.contains('active')) {
-                createCatsAroundVideo();
+                updateVideoArea();
+                
+                // Dostosuj pozycje kotów, jeśli wychodzą poza ekran
+                for (const cat of movingCats) {
+                    if (cat.x + cat.size > window.innerWidth) {
+                        cat.x = window.innerWidth - cat.size;
+                    }
+                    if (cat.y + cat.size > window.innerHeight) {
+                        cat.y = window.innerHeight - cat.size;
+                    }
+                }
             }
         });
         
