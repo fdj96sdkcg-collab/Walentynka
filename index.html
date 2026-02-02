@@ -102,6 +102,28 @@
             max-height: 80%;
             border-radius: 10px;
             box-shadow: 0 0 30px rgba(255, 64, 129, 0.7);
+            z-index: 22;
+            position: relative;
+        }
+        
+        .cats-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 21;
+        }
+        
+        .cat {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            pointer-events: none;
         }
         
         .back-btn {
@@ -114,6 +136,8 @@
             font-size: 1.5rem;
             cursor: pointer;
             display: none;
+            z-index: 23;
+            position: relative;
         }
         
         .back-btn.active {
@@ -149,6 +173,17 @@
             }
         }
         
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            display: none;
+        }
+        
         @media (max-width: 768px) {
             h1 {
                 font-size: 2.5rem;
@@ -164,6 +199,11 @@
                 align-items: center;
                 gap: 20px;
             }
+            
+            .cat {
+                width: 80px;
+                height: 80px;
+            }
         }
     </style>
 </head>
@@ -178,6 +218,7 @@
     </div>
     
     <div class="video-container" id="videoContainer">
+        <div class="cats-container" id="catsContainer"></div>
         <video id="valentineVideo" controls>
             <source src="Justin Bieber - One Less Lonely Girl.mp4" type="video/mp4">
             <source src="Justin Bieber - One Less Lonely Girl.webm" type="video/webm">
@@ -188,6 +229,7 @@
         <button class="back-btn" id="backBtn">Powrót do wyboru</button>
     </div>
     
+    <canvas id="confetti-canvas"></canvas>
     <div class="hearts" id="heartsContainer"></div>
 
     <script>
@@ -198,10 +240,13 @@
         const valentineVideo = document.getElementById('valentineVideo');
         const backBtn = document.getElementById('backBtn');
         const heartsContainer = document.getElementById('heartsContainer');
+        const catsContainer = document.getElementById('catsContainer');
+        const confettiCanvas = document.getElementById('confetti-canvas');
         
         // Zmienne do śledzenia stanu
         let noButtonClicked = false;
         let escapeCount = 0;
+        let confettiActive = false;
         
         // Tworzenie serduszek w tle
         function createHearts() {
@@ -216,26 +261,133 @@
             }
         }
         
+        // Funkcja do tworzenia konfetti
+        function launchConfetti() {
+            confettiCanvas.style.display = 'block';
+            confettiActive = true;
+            
+            const ctx = confettiCanvas.getContext('2d');
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+            
+            const confettiPieces = [];
+            const colors = ['#ff4081', '#ff79b0', '#ffcce6', '#cc0066', '#ffffff'];
+            
+            // Tworzymy 150 kawałków konfetti
+            for (let i = 0; i < 150; i++) {
+                confettiPieces.push({
+                    x: Math.random() * confettiCanvas.width,
+                    y: Math.random() * confettiCanvas.height - confettiCanvas.height,
+                    r: Math.random() * 10 + 5,
+                    d: Math.random() * 5 + 2,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    tilt: Math.random() * 10 - 10,
+                    tiltAngleIncremental: Math.random() * 0.07 + 0.05,
+                    tiltAngle: 0
+                });
+            }
+            
+            let animationFrame;
+            let time = 0;
+            
+            function drawConfetti() {
+                ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+                
+                for (let i = 0; i < confettiPieces.length; i++) {
+                    const p = confettiPieces[i];
+                    
+                    ctx.beginPath();
+                    ctx.lineWidth = p.r / 2;
+                    ctx.strokeStyle = p.color;
+                    ctx.moveTo(p.x + p.tilt + p.r / 4, p.y);
+                    ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 4);
+                    ctx.stroke();
+                    
+                    // Aktualizacja pozycji
+                    p.tiltAngle += p.tiltAngleIncremental;
+                    p.y += (Math.cos(time + p.d) + 1 + p.r / 2) / 2;
+                    p.x += Math.sin(time);
+                    p.tilt = Math.sin(p.tiltAngle) * 15;
+                    
+                    // Jeśli konfetti wypadło poza ekran, resetujemy je na górze
+                    if (p.y > confettiCanvas.height) {
+                        p.x = Math.random() * confettiCanvas.width;
+                        p.y = -20;
+                    }
+                }
+                
+                time += 0.05;
+                
+                // Po 3 sekundach zatrzymujemy konfetti
+                if (confettiActive && time < 3) {
+                    animationFrame = requestAnimationFrame(drawConfetti);
+                } else {
+                    confettiCanvas.style.display = 'none';
+                    confettiActive = false;
+                }
+            }
+            
+            drawConfetti();
+        }
+        
+        // Funkcja do tworzenia kotków wokół wideo
+        function createCatsAroundVideo() {
+            catsContainer.innerHTML = '';
+            
+            const videoRect = valentineVideo.getBoundingClientRect();
+            const positions = [
+                // Pozycje wokół wideo (góra, dół, lewo, prawo, rogi)
+                {left: videoRect.left - 120, top: videoRect.top + 50},
+                {left: videoRect.right + 20, top: videoRect.top + 50},
+                {left: videoRect.left + videoRect.width/2 - 50, top: videoRect.top - 120},
+                {left: videoRect.left + videoRect.width/2 - 50, top: videoRect.bottom + 20},
+                {left: videoRect.left - 120, top: videoRect.bottom - 120},
+                {left: videoRect.right + 20, top: videoRect.bottom - 120}
+            ];
+            
+            for (let i = 0; i < positions.length; i++) {
+                const cat = document.createElement('div');
+                cat.classList.add('cat');
+                cat.style.backgroundImage = `url('cat-jump.gif')`;
+                cat.style.left = positions[i].left + 'px';
+                cat.style.top = positions[i].top + 'px';
+                
+                catsContainer.appendChild(cat);
+            }
+        }
+        
         // Obsługa przycisku TAK
         yesBtn.addEventListener('click', function() {
-            videoContainer.classList.add('active');
+            // Uruchom konfetti
+            launchConfetti();
             
-            // Próbujemy odtworzyć lokalny plik wideo
-            valentineVideo.play().then(() => {
-                console.log("Wideo zaczęło się odtwarzać");
-            }).catch(error => {
-                console.log("Błąd odtwarzania wideo:", error);
-                // Jeśli nie uda się odtworzyć wideo, pokażemy komunikat
-                if (valentineVideo.error) {
-                    alert("Nie udało się załadować wideo. Upewnij się, że plik 'Justin Bieber - One Less Lonely Girl.mp4' znajduje się w tym samym folderze co strona.");
-                    videoContainer.classList.remove('active');
-                }
-            });
-            
-            backBtn.classList.add('active');
-            
-            // Zatrzymaj ruchome serduszka
-            heartsContainer.innerHTML = '';
+            // Po krótkim opóźnieniu pokaż wideo
+            setTimeout(() => {
+                videoContainer.classList.add('active');
+                
+                // Próbujemy odtworzyć lokalny plik wideo
+                valentineVideo.play().then(() => {
+                    console.log("Wideo zaczęło się odtwarzać");
+                    
+                    // Po załadowaniu wideo, dodaj kotki wokół niego
+                    setTimeout(() => {
+                        createCatsAroundVideo();
+                    }, 100);
+                    
+                }).catch(error => {
+                    console.log("Błąd odtwarzania wideo:", error);
+                    // Jeśli nie uda się odtworzyć wideo, pokażemy komunikat
+                    if (valentineVideo.error) {
+                        alert("Nie udało się załadować wideo. Upewnij się, że plik 'Justin Bieber - One Less Lonely Girl.mp4' znajduje się w tym samym folderze co strona.");
+                        videoContainer.classList.remove('active');
+                    }
+                });
+                
+                backBtn.classList.add('active');
+                
+                // Zatrzymaj ruchome serduszka
+                heartsContainer.innerHTML = '';
+            }, 500);
         });
         
         // Obsługa przycisku NIE (ucieka przed kursorem)
@@ -317,6 +469,9 @@
             valentineVideo.pause();
             valentineVideo.currentTime = 0;
             
+            // Usuń kotki
+            catsContainer.innerHTML = '';
+            
             // Przywróć serduszka w tle
             heartsContainer.innerHTML = '';
             createHearts();
@@ -332,6 +487,13 @@
             alert("Nie udało się załadować wideo. Upewnij się, że plik 'Justin Bieber - One Less Lonely Girl.mp4' znajduje się w tym samym folderze co strona.");
             videoContainer.classList.remove('active');
             backBtn.classList.remove('active');
+        });
+        
+        // Obsługa zmiany rozmiaru okna - ponownie pozycjonuj kotki
+        window.addEventListener('resize', function() {
+            if (videoContainer.classList.contains('active')) {
+                createCatsAroundVideo();
+            }
         });
         
         // Inicjalizacja - tworzenie serduszek
